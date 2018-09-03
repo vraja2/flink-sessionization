@@ -18,6 +18,9 @@ dependencies {
     compile "org.apache.flink:flink-clients_2.11:$flinkVersion"
     compile "org.apache.flink:flink-connector-kafka-0.11_2.11:$flinkVersion"
     compile "com.google.guava:guava:$guavaVersion"
+    compile "com.fasterxml.jackson.core:jackson-core:$jacksonVersion"
+    compile "com.fasterxml.jackson.core:jackson-annotations:$jacksonVersion"
+    compile "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
 }
 
 // In this section you declare where to find the dependencies of your project

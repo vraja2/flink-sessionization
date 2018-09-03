@@ -1,6 +1,7 @@
 package com.vigneshraja.sessionization;
 
-import org.apache.flink.api.common.serialization.SimpleStringSchema;
+import com.vigneshraja.sessionization.models.ClickstreamEvent;
+import com.vigneshraja.sessionization.serde.ClickStreamEventDeserializationSchema;
 import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
@@ -16,16 +17,16 @@ public class Sessionization {
         ParameterTool parameterTool = ParameterTool.fromPropertiesFile(
             Sessionization.class.getClassLoader().getResourceAsStream("sessionization.properties")
         );
-        DataStreamSource<String> datastream = env.addSource(
+        DataStreamSource<ClickstreamEvent> datastream = env.addSource(
             new FlinkKafkaConsumer011<>(
                 parameterTool.get("input.topic"),
-                new SimpleStringSchema(),
+                new ClickStreamEventDeserializationSchema(),
                 parameterTool.getProperties()
             )
         );
 
         // just a simple identity mapping to verify streams are configured correctly
-        datastream.rebalance().map((String message) -> message).print();
+        datastream.rebalance().map(ClickstreamEvent::toString).print();
 
         env.execute();
     }
