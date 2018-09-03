@@ -9,10 +9,15 @@
 plugins {
     // Apply the java-library plugin to add support for Java Library
     id 'java-library'
+    id 'com.github.johnrengelman.shadow' version "1.2.3"
 }
 
 dependencies {
-
+    compile "org.apache.flink:flink-java:$flinkVersion"
+    compile "org.apache.flink:flink-streaming-java_2.11:$flinkVersion"
+    compile "org.apache.flink:flink-clients_2.11:$flinkVersion"
+    compile "org.apache.flink:flink-connector-kafka-0.11_2.11:$flinkVersion"
+    compile "com.google.guava:guava:$guavaVersion"
 }
 
 // In this section you declare where to find the dependencies of your project
