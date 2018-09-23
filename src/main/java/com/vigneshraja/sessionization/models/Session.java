@@ -4,6 +4,7 @@ import com.google.common.base.MoreObjects;
 import com.google.common.collect.Lists;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Created by vraja on 9/4/18
@@ -18,6 +19,7 @@ public class Session {
     private List<Event> events;
     private long lastEventTimestamp;
     private Status status;
+    private String id;
 
     public Session() {
         this(Lists.newArrayList(), 0, Status.OPEN);
@@ -27,6 +29,7 @@ public class Session {
         this.events = events;
         this.lastEventTimestamp = lastEventTimestamp;
         this.status = status;
+        this.id = UUID.randomUUID().toString();
     }
 
     public List<Event> getEvents() {
@@ -53,6 +56,10 @@ public class Session {
         this.status = status;
     }
 
+    public String getId() {
+        return id;
+    }
+
     public void addEvent(Event event) {
         events.add(event);
         if (event.getTimestamp() > lastEventTimestamp) {
@@ -66,6 +73,7 @@ public class Session {
             .add("events", events)
             .add("lastEventTimestamp", lastEventTimestamp)
             .add("status", status)
+            .add("id", id)
             .toString();
     }
 }
