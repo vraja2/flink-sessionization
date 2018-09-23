@@ -51,16 +51,9 @@ public class ComputeSessions extends KeyedProcessFunction<String, ClickstreamEve
         }
 
         if (sessionState.contains(event.getKey())) {
-            // if session is closed, replace with new session
             Session session = sessionState.get(event.getKey());
-            if (session.getStatus() == Status.CLOSED) {
-                sessionState.put(
-                    event.getKey(), new Session(Lists.newArrayList(event), event.getTimestamp(), Status.OPEN)
-                );
-            } else {
-                session.addEvent(event);
-                sessionState.put(event.getKey(), session);
-            }
+            session.addEvent(event);
+            sessionState.put(event.getKey(), session);
         } else {
             sessionState.put(
                 event.getKey(),
@@ -76,6 +69,7 @@ public class ComputeSessions extends KeyedProcessFunction<String, ClickstreamEve
             // close session if it's been more than 30 minutes of inactivity
             if (Instant.now().toEpochMilli() - session.getLastEventTimestamp() >= SESSION_INACTIVITY_MS) {
                 session.setStatus(Status.CLOSED);
+                sessionState.remove(entry.getKey());
             }
             out.collect(session);
         }
