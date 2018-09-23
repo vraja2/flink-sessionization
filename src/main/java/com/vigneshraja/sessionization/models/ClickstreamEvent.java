@@ -7,7 +7,7 @@ import com.google.common.base.MoreObjects;
 /**
  * Created by vraja on 9/3/18
  */
-public class ClickstreamEvent implements Event {
+public class ClickstreamEvent extends Event {
 
     public enum EventType {
         PAGE_VIEW,
@@ -38,6 +38,7 @@ public class ClickstreamEvent implements Event {
         return MoreObjects.toStringHelper(this)
             .add("userId", userId)
             .add("eventType", eventType)
+            .add("timestamp", timestamp)
             .toString();
     }
 }

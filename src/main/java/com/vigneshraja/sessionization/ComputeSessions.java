@@ -12,12 +12,19 @@ import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.functions.KeyedProcessFunction;
 import org.apache.flink.util.Collector;
 
+import java.time.Instant;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
+import static com.vigneshraja.sessionization.models.Session.*;
 
 /**
  * Created by vraja on 9/6/18
  */
 public class ComputeSessions extends KeyedProcessFunction<String, ClickstreamEvent, Session> {
+
+    // TODO: store in config
+    private static final long SESSION_INACTIVITY_MS = TimeUnit.MINUTES.toMillis(30);
 
     private transient MapState<String, Session> sessionState;
     private transient ValueState<Long> timerState;
@@ -38,27 +45,43 @@ public class ComputeSessions extends KeyedProcessFunction<String, ClickstreamEve
         // set the first timer
         if (timerState.value() == null) {
             // TODO: put timer interval in config
-            long nextTimer = System.currentTimeMillis() + 60000;
+            long nextTimer = Instant.now().toEpochMilli() + 60000;
             ctx.timerService().registerProcessingTimeTimer(nextTimer);
             timerState.update(nextTimer);
         }
 
         if (sessionState.contains(event.getKey())) {
-            // TODO: if session is closed, replace with new session
-            sessionState.get(event.getKey()).getEvents().add(event);
+            // if session is closed, replace with new session
+            Session session = sessionState.get(event.getKey());
+            if (session.getStatus() == Status.CLOSED) {
+                sessionState.put(
+                    event.getKey(), new Session(Lists.newArrayList(event), event.getTimestamp(), Status.OPEN)
+                );
+            } else {
+                session.addEvent(event);
+                sessionState.put(event.getKey(), session);
+            }
         } else {
-            sessionState.put(event.getKey(), new Session(Lists.newArrayList(event)));
+            sessionState.put(
+                event.getKey(),
+                new Session(Lists.newArrayList(event), event.getTimestamp(), Status.OPEN)
+            );
         }
     }
 
     @Override
     public void onTimer(long timestamp, OnTimerContext ctx, Collector<Session> out) throws Exception {
         for (Map.Entry<String, Session> entry : sessionState.entries()) {
-            // TODO: if more than 30 minutes of inactivity, close session
-            out.collect(entry.getValue());
+            Session session = entry.getValue();
+            // close session if it's been more than 30 minutes of inactivity
+            if (Instant.now().toEpochMilli() - session.getLastEventTimestamp() >= SESSION_INACTIVITY_MS) {
+                session.setStatus(Status.CLOSED);
+            }
+            out.collect(session);
         }
 
-        long nextTimer = System.currentTimeMillis() + 60000;
+        // computing current time again since we want to wait a minute after the RocksDB iteration is performed
+        long nextTimer = Instant.now().toEpochMilli() + 60000;
         timerState.update(nextTimer);
         ctx.timerService().registerProcessingTimeTimer(nextTimer);
     }
