@@ -1,5 +1,6 @@
 package com.vigneshraja.sessionization.models;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.MoreObjects;
 import com.google.common.collect.Lists;
 
@@ -16,9 +17,16 @@ public class Session {
         CLOSED
     }
 
+    @JsonProperty
     private List<Event> events;
+
+    @JsonProperty
     private long lastEventTimestamp;
+
+    @JsonProperty
     private Status status;
+
+    @JsonProperty
     private String id;
 
     public Session() {

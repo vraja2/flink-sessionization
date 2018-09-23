@@ -3,6 +3,7 @@ package com.vigneshraja.sessionization;
 import com.vigneshraja.sessionization.models.ClickstreamEvent;
 import com.vigneshraja.sessionization.models.Session;
 import com.vigneshraja.sessionization.serde.ClickStreamEventDeserializationSchema;
+import com.vigneshraja.sessionization.serde.SessionSerializationSchema;
 import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.contrib.streaming.state.RocksDBStateBackend;
 import org.apache.flink.runtime.state.StateBackend;
@@ -10,6 +11,7 @@ import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer011;
+import org.apache.flink.streaming.connectors.kafka.FlinkKafkaProducer011;
 
 /**
  * Created by vraja on 9/2/18
@@ -38,8 +40,13 @@ public class Sessionization {
             .keyBy(ClickstreamEvent::getKey)
             .process(new ComputeSessions());
 
-        // just write to sdout for now
-        sessionStream.map(Session::toString).print();
+        sessionStream.addSink(
+            new FlinkKafkaProducer011<>(
+                parameterTool.get("output.topic"),
+                new SessionSerializationSchema(),
+                parameterTool.getProperties()
+            )
+        );
 
         env.execute();
     }
